@@ -18,7 +18,6 @@ protected:
 public:
     Request(int id, const Model& model, int admissionCycle, std::string prompt);
     Request(const Request& other, const Model& newModel);
-    virtual Request* clone(const Model& model) const = 0;
     virtual std::size_t getNeededMemory(const GPU& gpu) const=0;
     virtual std::size_t getMaxNeededMemory() const=0;
     virtual std::vector<std::string> getCacheableTokens() const=0;
@@ -40,7 +39,11 @@ class GenerativeRequest: public Request{
 private:
     std::string scriptedOutput;
     std::size_t maxOutputTokens;
-    
+    std::vector<std::string> outputTokens;
+    std:: size_t position;
+    std:: size_t allocatedBlocks;
+    std::vector<std::string> sequenceUpTo(std::size_t p) const;
+
 public:
     GenerativeRequest(int id, const Model& model, int admissionCycle, std::string prompt, std::string scriptedOutput,
     std::size_t maxOutputTokens);
@@ -58,6 +61,11 @@ public:
 };
 
 class EmbeddingRequest: public Request{
+private:
+    std::size_t processedTokens;
+    std::vector<int> result;
+    std::size_t slotOf(std::size_t index, std::size_t blockSize) const;
+    std::size_t offsetOf(std::size_t index, std::size_t blockSize) const;
 public:
     EmbeddingRequest(int id, const Model& model, int admissionCycle, std::string prompt);
     EmbeddingRequest(const EmbeddingRequest& other, const Model& newModel);

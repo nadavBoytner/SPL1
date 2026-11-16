@@ -17,6 +17,7 @@ public:
     GPU(std::size_t blocksNum, std::size_t blockSize);
     std::size_t availableSlots() const;
     std::size_t getBlocksForMemory(std::size_t memory) const;
+    std::size_t getBlockSize() const;
     void reserve(std::size_t n, const Request& request);
     void unreserve(std::size_t n, const Request& request);
     std::size_t allocateBlock(const Request& request);
