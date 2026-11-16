@@ -19,7 +19,13 @@ public:
     void acquire();
     IdleAction release();
     //rule of 5
-    
+    virtual ~MemoryBlock();
+    MemoryBlock(const MemoryBlock& other);
+    MemoryBlock& operator=(const MemoryBlock& other);
+    MemoryBlock(MemoryBlock&& other);
+    MemoryBlock& operator=(MemoryBlock&& other);
+    private:
+    void clear();
 };
 
 class KVBlock: public MemoryBlock{
