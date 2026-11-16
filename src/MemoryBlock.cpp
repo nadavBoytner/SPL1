@@ -1,4 +1,5 @@
 # include "MemoryBlock.h"
+//MemoryBlock
 //constructer
 MemoryBlock::MemoryBlock(size_t size):
     size(size), refCount(0), data(new int[size]()){}
@@ -51,4 +52,49 @@ MemoryBlock& MemoryBlock::operator=(MemoryBlock&& other){
         other.refCount = 0;
     }
     return *this;
+}
+
+int MemoryBlock::readFromBlock(std::size_t offset) const{
+    if(offset>=size){
+        std::__throw_out_of_range("readFromBlock: offset out of range");
+    }
+    return data[offset];
+}
+
+void MemoryBlock::writeToBlock(std::size_t offset, int value){
+    if(offset>=size){
+        std::__throw_out_of_range("writeToBlock: offset out of range");
+    }
+    data[offset] = value;
+}
+
+void MemoryBlock::acquire(){
+    refCount++;
+}
+
+IdleAction MemoryBlock::release(){
+    if(refCount > 0){
+        refCount--;
+    }
+    if(refCount == 0){
+        return onLastRelease();
+    }
+    return IdleAction::KeepCached;
+}
+//KVBlock
+KVBlock::KVBlock(size_t size):MemoryBlock(size) {}
+IdleAction KVBlock::onLastRelease() const{
+    return IdleAction::KeepCached;
+}
+MemoryBlock* KVBlock::clone() const{
+    return new KVBlock(*this);
+}
+
+//EmbeddingWorkspace
+EmbeddingWorkspace::EmbeddingWorkspace(size_t size): MemoryBlock(size) {}
+IdleAction EmbeddingWorkspace::onLastRelease() const{
+    return IdleAction::Destroy;
+}
+MemoryBlock* EmbeddingWorkspace::clone() const{
+    return new EmbeddingWorkspace(*this);
 }
