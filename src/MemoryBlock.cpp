@@ -28,7 +28,7 @@ MemoryBlock& MemoryBlock::operator=(const MemoryBlock& other){
     if(&other != this){
         size = other.size;
         int* newData = new int[size];
-        for (int i = 0; i < size; i++){
+        for (std::size_t i = 0; i < size; i++){
             newData[i] = other.data[i];
         }
         delete[] data;
