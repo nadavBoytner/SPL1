@@ -16,7 +16,7 @@ MemoryBlock::MemoryBlock(const MemoryBlock& other):
             data[i] = other.data[i];
         }
     }
-//rvalue constructer
+//move constructer
 MemoryBlock::MemoryBlock(MemoryBlock&& other): 
     size(other.size), refCount(0), data(other.data){
         other.data = nullptr;
@@ -39,7 +39,7 @@ MemoryBlock& MemoryBlock::operator=(const MemoryBlock& other){
     return *this;
 }
 
-//rvalue assignment
+//move assignment
 MemoryBlock& MemoryBlock::operator=(MemoryBlock&& other){
     if(this != &other){
         delete[] data;
