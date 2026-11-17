@@ -63,7 +63,6 @@ Config Server::readConfig(string configPath) const{
     return Config{blockSize, gpuConfigs, modelConfigs, requestConfigs, policy};
 }
 
-<<<<<<< HEAD
 Server::Server(std::string configPath)
     : gpus(),
       models(),
@@ -105,7 +104,6 @@ Server::Server(std::string configPath)
     }
 }
 
-=======
 void Server::serve(){
     while(step()){}
     std::size_t cacheHits = 0;
@@ -252,7 +250,6 @@ bool Server::step(){
     cycle++;
     return true;
 }
->>>>>>> 552b51a0b6d5ba8f3b040ba9340687f827bd8505
 void Server::clear(){
     for(std::size_t i =0; i<models.size(); i++){
         delete models[i];
