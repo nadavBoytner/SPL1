@@ -1,7 +1,7 @@
 #include <fstream>
 #include <stdexcept>
 #include "json.hpp"
-
+#include "Model.h"
 #include "Server.h"
 
 using namespace std;
@@ -55,4 +55,50 @@ Config Server::readConfig(string configPath) const{
     string policy = config["scheduling_policy"].get<string>();
 
     return Config{blockSize, gpuConfigs, modelConfigs, requestConfigs, policy};
+}
+
+void Server::clear(){
+    for(std::size_t i =0; i<models.size(); i++){
+        delete models[i];
+    }
+    for (std::size_t i = 0; i < nonSubmittedRequests.size(); i++) {
+        delete nonSubmittedRequests[i];
+    }
+    for (std::size_t i = 0; i < waitingRequests.size(); i++) {
+        delete waitingRequests[i];
+    }
+    for (std::size_t i = 0; i < activeRequests.size(); i++) {
+        delete activeRequests[i];
+    }
+    delete policy;
+    nonSubmittedRequests.clear();
+    waitingRequests.clear();
+    activeRequests.clear();
+    models.clear();
+    gpus.clear();
+    activeGpus.clear();
+    policy = nullptr;
+    cycle = 0;
+}
+
+Server::~Server(){
+    clear();
+}
+
+Model* Server::findModel(const std::string& id) const {
+    for (std::size_t i = 0; i < models.size(); i++) {
+        if (models[i]->getM() == id) {
+            return models[i];
+        }
+    }
+    throw std::runtime_error("findModel: model not found");
+}
+
+void Server::copyFrom(const Server& other){
+    gpus = other.gpus; 
+    for (std::size_t i = 0; i < other.models.size(); i++) {
+    models.push_back(new Model(*other.models[i]));
+}
+for (std::size_t i = 0; i < other.nonSubmittedRequests.size(); i++) {
+    nonSubmittedRequests.push_back(other.nonSubmittedRequests[i]->clone(*findModel(other.nonSubmittedRequests[i]->getModel().getId())));
 }

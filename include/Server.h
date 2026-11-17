@@ -41,17 +41,28 @@ class SchedulingPolicy;
 class Server{
 private:
     Config readConfig(std::string configPath) const;
-
+    int cycle;
+    std::vector<std::size_t> activeGpus;
     std::vector<GPU> gpus;
     std::vector<Model*> models;
     std::vector<Request*> nonSubmittedRequests;
     std::vector<Request*> waitingRequests;
     std::vector<Request*> activeRequests;
     SchedulingPolicy* policy;
+    void clear();
+    void copyFrom(const Server& other);
+    Model* findModel(const std::string& id) const;
 public:
     Server(std::string configPath);
+    Server(const Server& other);
+    Server(Server&& other);
+    Server& operator=(const Server& other);
+    Server& operator=(Server&& other);
+    ~Server();
+    
     bool step();
-    void serve();
+    void server();
+    
 };
 
 #endif
