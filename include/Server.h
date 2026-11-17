@@ -50,7 +50,8 @@ private:
     std::vector<Request*> activeRequests;
     SchedulingPolicy* policy;
     void clear();
-    void copyFrom(Server& other);
+    void copyFrom(const Server& other);
+    Model* findModel(const std::string& id) const;
 public:
     Server(std::string configPath);
     Server(const Server& other);
@@ -58,7 +59,6 @@ public:
     Server& operator=(const Server& other);
     Server& operator=(Server&& other);
     ~Server();
-    
     bool step();
     void serve();
     

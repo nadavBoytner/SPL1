@@ -1,11 +1,14 @@
 #include <fstream>
 #include <stdexcept>
 #include "json.hpp"
+
 #include <iostream>
 #include "Server.h"
 #include "Model.h"
 #include "SchedulingPolicy.h"
 #include "GPU.h"
+
+
 
 using namespace std;
 using json = nlohmann::json;
@@ -117,7 +120,7 @@ bool Server::step(){
         int bestIdx = -1;
         std::size_t bestCached;
         std::size_t bestNeed;
-        PrefixMatch bestmatch;
+        PrefixMatch bestmatch = {0, std::vector<std::size_t>()};
         for(size_t g = 0; g < gpus.size(); g++){//each gpu
             PrefixMatch match = gpus[g].findLongestCachedPrefix(modelId,e ,tokens);
             std::size_t cached = match.blockIds.size();
@@ -149,7 +152,7 @@ bool Server::step(){
         }
         int src = -1;
         std::size_t srcTokens = bestmatch.matchedTokens;     // צריך לנצח את זה
-        PrefixMatch srcMatch;
+        PrefixMatch srcMatch = {0, std::vector<std::size_t>()};
 
         for (std::size_t j = 0; j < gpus.size(); j++) {
             if (static_cast<int>(j) == bestIdx) {
@@ -206,3 +209,122 @@ bool Server::step(){
     cycle++;
     return true;
 }
+void Server::clear(){
+    for(std::size_t i =0; i<models.size(); i++){
+        delete models[i];
+    }
+    for (std::size_t i = 0; i < nonSubmittedRequests.size(); i++) {
+        delete nonSubmittedRequests[i];
+    }
+    for (std::size_t i = 0; i < waitingRequests.size(); i++) {
+        delete waitingRequests[i];
+    }
+    for (std::size_t i = 0; i < activeRequests.size(); i++) {
+        delete activeRequests[i];
+    }
+    delete policy;
+    nonSubmittedRequests.clear();
+    waitingRequests.clear();
+    activeRequests.clear();
+    models.clear();
+    gpus.clear();
+    activeGpus.clear();
+    policy = nullptr;
+    cycle = 0;
+}
+
+Server::~Server(){
+    clear();
+}
+
+Model* Server::findModel(const std::string& id) const {
+    for (std::size_t i = 0; i < models.size(); i++) {
+        if (models[i]->getModeId() == id) {
+            return models[i];
+        }
+    }
+    throw std::runtime_error("findModel: model not found");
+}
+
+void Server::copyFrom(const Server& other){
+    gpus = other.gpus; 
+    for (std::size_t i = 0; i < other.models.size(); i++) {
+    models.push_back(new Model(*other.models[i]));
+}
+for (std::size_t i = 0; i < other.nonSubmittedRequests.size(); i++) {
+    nonSubmittedRequests.push_back(other.nonSubmittedRequests[i]->clone(*findModel(other.nonSubmittedRequests[i]->getModel().getModeId())));
+}
+for(std::size_t i = 0; i < other.waitingRequests.size(); i++){
+    Request* r = other.waitingRequests[i];
+        waitingRequests.push_back(r->clone(*findModel(r->getModel().getModeId())));
+}
+for (std::size_t i = 0; i < other.activeRequests.size(); i++) {
+        Request* r = other.activeRequests[i];
+        activeRequests.push_back(r->clone(*findModel(r->getModel().getModeId())));
+}
+policy=nullptr;
+if(other.policy != nullptr){
+    policy = other.policy->clone();
+}
+cycle = other.cycle;
+activeGpus = other.activeGpus;
+}
+
+Server::Server(const Server& other):
+    gpus(),
+    models(),
+    nonSubmittedRequests(),
+    waitingRequests(),
+    activeRequests(),
+    policy(nullptr),
+    cycle(0),
+    activeGpus() {
+    copyFrom(other);
+}
+
+Server::Server(Server&& other)
+    : gpus(),
+      models(),
+      nonSubmittedRequests(),
+      waitingRequests(),
+      activeRequests(),
+      policy(other.policy),
+      cycle(other.cycle),
+      activeGpus() {
+    gpus.swap(other.gpus);
+    models.swap(other.models);
+    nonSubmittedRequests.swap(other.nonSubmittedRequests);
+    waitingRequests.swap(other.waitingRequests);
+    activeRequests.swap(other.activeRequests);
+    activeGpus.swap(other.activeGpus);
+    other.policy = nullptr;
+    other.cycle = 0;
+}
+
+Server& Server::operator=(const Server& other){
+    if(this == &other){
+        return *this;
+    }
+    clear();
+    copyFrom(other);
+    return *this;
+}
+
+Server& Server::operator=(Server&& other) {
+    if (this == &other) {
+        return *this;
+    }
+    clear();            
+    gpus.swap(other.gpus);
+    models.swap(other.models);
+    nonSubmittedRequests.swap(other.nonSubmittedRequests);
+    waitingRequests.swap(other.waitingRequests);
+    activeRequests.swap(other.activeRequests);
+    activeGpus.swap(other.activeGpus);
+    policy = other.policy;
+    cycle = other.cycle;
+    other.policy = nullptr;
+    other.cycle = 0;
+    return *this;
+}
+
