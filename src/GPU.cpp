@@ -289,7 +289,7 @@ void GPU::addCacheHits(std::size_t n) {
 }
 
 PrefixMatch GPU::findLongestCachedPrefix(const std::string& modelId, std::size_t embeddingSize, const std::vector<std::string>& promptTokens) const{
-    PrefixMatch res;
+    PrefixMatch res = {0, std::vector<std::size_t>()};
     res.matchedTokens =0;
     std::size_t t = blockSize / embeddingSize;
     std::size_t covered = t;
