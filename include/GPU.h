@@ -4,6 +4,7 @@
 #include <string>
 #include <cstddef>
 #include <vector>
+#include "Request.h"
 
 struct PrefixMatch {
     std::size_t matchedTokens;
