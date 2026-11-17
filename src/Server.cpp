@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include "Model.h"
 #include "Server.h"
+#include "SchedulingPolicy.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -87,7 +88,7 @@ Server::~Server(){
 
 Model* Server::findModel(const std::string& id) const {
     for (std::size_t i = 0; i < models.size(); i++) {
-        if (models[i]->getM() == id) {
+        if (models[i]->getModeId() == id) {
             return models[i];
         }
     }
@@ -100,5 +101,78 @@ void Server::copyFrom(const Server& other){
     models.push_back(new Model(*other.models[i]));
 }
 for (std::size_t i = 0; i < other.nonSubmittedRequests.size(); i++) {
-    nonSubmittedRequests.push_back(other.nonSubmittedRequests[i]->clone(*findModel(other.nonSubmittedRequests[i]->getModel().getId())));
+    nonSubmittedRequests.push_back(other.nonSubmittedRequests[i]->clone(*findModel(other.nonSubmittedRequests[i]->getModel().getModeId())));
+}
+for(std::size_t i = 0; i < other.waitingRequests.size(); i++){
+    Request* r = other.waitingRequests[i];
+        waitingRequests.push_back(r->clone(*findModel(r->getModel().getModeId())));
+}
+for (std::size_t i = 0; i < other.activeRequests.size(); i++) {
+        Request* r = other.activeRequests[i];
+        activeRequests.push_back(r->clone(*findModel(r->getModel().getModeId())));
+}
+policy=nullptr;
+if(other.policy != nullptr){
+    policy = other.policy->clone();
+}
+cycle = other.cycle;
+activeGpus = other.activeGpus;
+}
+
+Server::Server(const Server& other):
+    gpus(),
+    models(),
+    nonSubmittedRequests(),
+    waitingRequests(),
+    activeRequests(),
+    policy(nullptr),
+    cycle(0),
+    activeGpus() {
+    copyFrom(other);
+}
+
+Server::Server(Server&& other)
+    : gpus(),
+      models(),
+      nonSubmittedRequests(),
+      waitingRequests(),
+      activeRequests(),
+      policy(other.policy),
+      cycle(other.cycle),
+      activeGpus() {
+    gpus.swap(other.gpus);
+    models.swap(other.models);
+    nonSubmittedRequests.swap(other.nonSubmittedRequests);
+    waitingRequests.swap(other.waitingRequests);
+    activeRequests.swap(other.activeRequests);
+    activeGpus.swap(other.activeGpus);
+    other.policy = nullptr;
+    other.cycle = 0;
+}
+
+Server& Server::operator=(const Server& other){
+    if(this == &other){
+        return *this;
+    }
+    clear();
+    copyFrom(other);
+    return *this;
+}
+
+Server& Server::operator=(Server&& other) {
+    if (this == &other) {
+        return *this;
+    }
+    clear();            
+    gpus.swap(other.gpus);
+    models.swap(other.models);
+    nonSubmittedRequests.swap(other.nonSubmittedRequests);
+    waitingRequests.swap(other.waitingRequests);
+    activeRequests.swap(other.activeRequests);
+    activeGpus.swap(other.activeGpus);
+    policy = other.policy;
+    cycle = other.cycle;
+    other.policy = nullptr;
+    other.cycle = 0;
+    return *this;
 }

@@ -59,7 +59,6 @@ public:
     Server& operator=(const Server& other);
     Server& operator=(Server&& other);
     ~Server();
-    
     bool step();
     void server();
     
