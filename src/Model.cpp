@@ -62,7 +62,7 @@ std::vector<std::string> Model:: tokenizer(std::string text) const{
                 curr.clear();
             }
         }
-        else if ((c>'a' && c<'z') || (c>'A' && c<'Z') || (c >= '0' && c <= '9')){
+        else if ((c>='a' && c<='z') || (c>='A' && c<='Z') || (c >= '0' && c <= '9')){
             curr += c;
         }
     }
@@ -71,3 +71,6 @@ std::vector<std::string> Model:: tokenizer(std::string text) const{
     }
     return tokens;
 }
+
+std:: string Model::getModeId() const{ return modelId;}
+std::size_t Model::getEmbeddingSize() const {return embeddingSize;}
