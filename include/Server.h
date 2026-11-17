@@ -50,7 +50,7 @@ private:
     std::vector<Request*> activeRequests;
     SchedulingPolicy* policy;
     void clear();
-    void coptFrom(Server& other);
+    void copyFrom(Server& other);
 public:
     Server(std::string configPath);
     Server(const Server& other);

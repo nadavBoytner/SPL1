@@ -370,5 +370,7 @@ void GPU::copyMemoryFromOtherGPU(const GPU& other, const std::vector<std::size_t
         chain.push_back(target);
     }
 }
-    
+bool GPU::isIdle(std::size_t slot) const {
+    return memory[slot] != nullptr && memory[slot]->getRefCount() == 0;
+}
 
