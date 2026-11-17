@@ -58,6 +58,47 @@ Config Server::readConfig(string configPath) const{
     return Config{blockSize, gpuConfigs, modelConfigs, requestConfigs, policy};
 }
 
+Server::Server(std::string configPath)
+    : gpus(),
+      models(),
+      nonSubmittedRequests(),
+      waitingRequests(),
+      activeRequests(),
+      policy(nullptr),
+      cycle(0),
+      activeGpus() {
+    Config config = readConfig(configPath);
+    for (std::size_t i = 0; i < config.gpus.size(); i++) {
+        std::size_t blocksNum = config.gpus[i].memoryBytes / config.blockSize;
+        gpus.push_back(GPU(blocksNum, config.blockSize));
+    }
+    for (std::size_t i = 0; i < config.models.size(); i++) {
+        models.push_back(new Model(config.models[i].id, config.models[i].embeddingSize));
+    }
+    for (std::size_t i = 0; i < config.requests.size(); i++) {
+        const RequestConfig& rc = config.requests[i];
+        Model* model = findModel(rc.modelId);
+        int id = static_cast<int>(rc.id);
+        if (rc.type == RequestType::Generative) {
+            nonSubmittedRequests.push_back(
+                new GenerativeRequest(id, *model, rc.admissionCycle, rc.prompt,
+                                      rc.scriptedOutput, rc.maxOutputTokens));
+        } else {
+            nonSubmittedRequests.push_back(
+                new EmbeddingRequest(id, *model, rc.admissionCycle, rc.prompt));
+        }
+    }
+    if (config.policy == "arrivalOrder") {
+        policy = new ArrivalOrderPolicy();
+    } else if (config.policy == "shortestJob") {
+        policy = new ShortestJobPolicy();
+    } else if (config.policy == "longestPrefix") {
+        policy = new LongestPrefixPolicy();
+    } else {
+        throw std::runtime_error("Server: unknown scheduling policy");
+    }
+}
+
 void Server::clear(){
     for(std::size_t i =0; i<models.size(); i++){
         delete models[i];
