@@ -60,7 +60,7 @@ public:
     Server& operator=(Server&& other);
     ~Server();
     bool step();
-    void server();
+    void serve();
     
 };
 
