@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <vector>
 #include "Request.h"
+#include <map>
 
 struct PrefixMatch {
     std::size_t matchedTokens;
@@ -12,9 +13,17 @@ struct PrefixMatch {
 };
 
 class MemoryBlock;
+class Request;
+class GenerativeRequest;
+class EmbeddingRequest;
 
 class GPU{
 public:
+    ~GPU();
+    GPU(const GPU& other);
+    GPU& operator=(const GPU& other);
+    GPU(GPU&& other);
+    GPU& operator=(GPU&& other);
     GPU(std::size_t blocksNum, std::size_t blockSize);
     std::size_t availableSlots() const;
     std::size_t getBlocksForMemory(std::size_t memory) const;
@@ -30,12 +39,28 @@ public:
     void assignPrefixToBlock(std::size_t block, const std::vector<std::string>& prefixTokens, const std::string& modelId);
     int readFromBlock(std::size_t blockId, std::size_t offset) const;
     void writeToBlock(std::size_t blockId, std::size_t offset, int value);
+    std::size_t getCacheHits() const;
+    std::size_t getEvictions() const;
+    std::size_t getBlockSize() const;
+    std::size_t getBlocksNum() const;
+    void addCacheHits(std::size_t n);
     PrefixMatch findLongestCachedPrefix(const std::string& modelId, std::size_t embeddingSize,
                                         const std::vector<std::string>& promptTokens) const;
+                                    
+    
 private:
     std::size_t blocksNum;
     std::size_t blockSize;
     std::vector<MemoryBlock*> memory;
+    std::vector<std::string> slotModel;
+    std::vector<std::vector<std::string>> slotKey;
+    std::size_t totalReserved;
+    std::map<int, std::size_t> reservations;
+    std::size_t evictions;
+    std::size_t cacheHits;
+    void clear();
+    static bool isInChain(const std::vector<std::size_t>& chain, std::size_t slot);
+
 };
 
 #endif
