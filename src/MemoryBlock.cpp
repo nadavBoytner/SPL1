@@ -54,6 +54,10 @@ MemoryBlock& MemoryBlock::operator=(MemoryBlock&& other){
     return *this;
 }
 
+std::size_t MemoryBlock::getRefCount() const{
+    return refCount;
+}
+
 int MemoryBlock::readFromBlock(std::size_t offset) const{
     if(offset>=size){
         std::__throw_out_of_range("readFromBlock: offset out of range");

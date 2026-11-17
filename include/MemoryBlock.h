@@ -24,8 +24,10 @@ public:
     MemoryBlock& operator=(const MemoryBlock& other);
     MemoryBlock(MemoryBlock&& other);
     MemoryBlock& operator=(MemoryBlock&& other);
+    std::size_t getRefCount() const;
     private:
     void clear();
+    
 };
 
 class KVBlock: public MemoryBlock{
